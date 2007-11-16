@@ -4,6 +4,7 @@
 
 #include <algorithm>
 using namespace std;
+using namespace reco;
 
 namespace {
   // FIXME
@@ -76,7 +77,7 @@ void SequentialVertexFitter::setDefaultParameters()
 
 CachingVertex 
 SequentialVertexFitter::vertex(const vector<reco::TransientTrack> & tracks) const
-{ 
+{
   // Linearization Point
   GlobalPoint linP = theLinP->getLinearizationPoint(tracks);
   if (!insideTrackerBounds(linP)) linP = GlobalPoint(0,0,0);
@@ -116,6 +117,35 @@ SequentialVertexFitter::vertex(const vector<reco::TransientTrack> & tracks,
   vector<RefCountedVertexTrack> vtContainer = linearizeTracks(tracks, state);
   return fit(vtContainer, state, false);
 }
+
+
+  /** Fit vertex out of a set of TransientTracks. 
+   *  The specified BeamSpot will be used as priot, but NOT for the linearization.
+   * The specified LinearizationPointFinder will be used to find the linearization point.
+   */
+CachingVertex 
+SequentialVertexFitter::vertex(const vector<reco::TransientTrack> & tracks,
+			       const BeamSpot& beamSpot) const
+{
+  VertexState beamSpotState(beamSpot);
+  vector<RefCountedVertexTrack> vtContainer;
+
+  if (tracks.size() > 1) {
+    // Linearization Point search if there are more than 1 track
+    GlobalPoint linP = theLinP->getLinearizationPoint(tracks);
+    if (!insideTrackerBounds(linP)) linP = GlobalPoint(0,0,0);
+    AlgebraicSymMatrix we(3,1);
+    GlobalError error(we*10000);
+    VertexState lpState(linP, error);
+    vtContainer = linearizeTracks(tracks, lpState);
+  } else {
+    // otherwise take the beamspot position.
+    vtContainer = linearizeTracks(tracks, beamSpotState);
+  }
+
+  return fit(vtContainer, beamSpotState, true);
+}
+
 
 // Fit vertex out of a set of RecTracks. 
 // Uses the position as both the linearization point AND as prior
@@ -234,13 +264,13 @@ SequentialVertexFitter::fit(const vector<RefCountedVertexTrack> & tracks,
     validVertex = true;
     // check tracker bounds and NaN in position
     if (!insideTrackerBounds(fVertex.position())) {
-      edm::LogError("RecoVertex/SequentialVertexFitter") 
+      LogDebug("RecoVertex/SequentialVertexFitter") 
 	 << "Fitted position is out of tracker bounds.\n";
       validVertex = false;
     }
     
     if (hasNan(fVertex.position())) {
-      edm::LogError("RecoVertex/SequentialVertexFitter") 
+      LogDebug("RecoVertex/SequentialVertexFitter") 
 	 << "Fitted position is NaN.\n";
       validVertex = false;
     }
@@ -263,13 +293,13 @@ SequentialVertexFitter::fit(const vector<RefCountedVertexTrack> & tracks,
 		(!validVertex) ) );
 
   if (!validVertex) {
-    edm::LogError("RecoVertex/SequentialVertexFitter") 
+    LogDebug("RecoVertex/SequentialVertexFitter") 
        << "Fitted position is invalid (out of tracker bounds or has NaN). Returned vertex is invalid\n";
     return CachingVertex(); // return invalid vertex
   }
 
   if (step >= theMaxStep) {
-    edm::LogError("RecoVertex/SequentialVertexFitter") 
+    LogDebug("RecoVertex/SequentialVertexFitter") 
        << "The maximum number of steps has been exceeded. Returned vertex is invalid\n";
     return CachingVertex(); // return invalid vertex
   }

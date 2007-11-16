@@ -3,16 +3,20 @@
 #include "DataFormats/GeometryCommonDetAlgo/interface/GlobalError.h"
 #include "RecoVertex/VertexTools/interface/VertexDistance.h"
 #include "RecoVertex/VertexPrimitives/interface/ConvertError.h"
-#include "RecoVertex/VertexTools/interface/BeamSpot.h"
 
+using namespace reco;
 
 VertexCompatibleWithBeam::VertexCompatibleWithBeam(const VertexDistance & d, 
 						   float cut) 
   : theDistance(d.clone()), theCut(cut) 
 {
   BeamSpot beamSpot;
-  theBeam = VertexState(beamSpot.position(), beamSpot.error());
+  theBeam = VertexState(beamSpot);
 }
+
+VertexCompatibleWithBeam::VertexCompatibleWithBeam(const VertexDistance & d, 
+						   float cut, const BeamSpot & beamSpot) 
+    : theDistance(d.clone()), theCut(cut), theBeam(beamSpot){}
 
 
 VertexCompatibleWithBeam::VertexCompatibleWithBeam(
@@ -34,10 +38,12 @@ VertexCompatibleWithBeam::operator=(const VertexCompatibleWithBeam & other)
   theDistance = (*other.theDistance).clone();
   theCut = other.theCut;
   theBeam = other.theBeam;
-
   return *this;
 }
 
+void VertexCompatibleWithBeam::setBeamSpot(const BeamSpot & beamSpot){
+  theBeam = VertexState(beamSpot);
+}
 
 bool VertexCompatibleWithBeam::operator()(const reco::Vertex & v) const 
 {
@@ -53,3 +59,21 @@ float VertexCompatibleWithBeam::distanceToBeam(const reco::Vertex & v) const
   VertexState vs(p, RecoVertex::convertError(v.covariance()));
   return theDistance->distance(vs, theBeam).value();
 }
+
+
+float VertexCompatibleWithBeam::distanceToBeam(const reco::Vertex & v, const VertexState & bs) const
+{
+  GlobalPoint p(Basic3DVector<float> (v.position()));
+  VertexState vs(p, RecoVertex::convertError(v.covariance()));
+  return theDistance->distance(vs, bs).value();
+}
+
+
+bool VertexCompatibleWithBeam::operator()(const reco::Vertex & v, const VertexState & bs) const 
+{
+  GlobalPoint p(Basic3DVector<float> (v.position()));
+  VertexState vs(p, RecoVertex::convertError(v.covariance()));
+  return (theDistance->distance(vs, bs).value() < theCut);
+}
+
+
