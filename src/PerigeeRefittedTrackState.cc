@@ -1,5 +1,4 @@
 #include "RecoVertex/VertexTools/interface/PerigeeRefittedTrackState.h"
-#include "RecoVertex/VertexPrimitives/interface/RefCountedRefittedTrackState.h"
 #include "TrackingTools/GeomPropagators/interface/AnalyticalPropagator.h"
 #include "DataFormats/TrajectorySeed/interface/PropagationDirection.h"
 #include "TrackingTools/TrajectoryState/interface/FreeTrajectoryState.h"
@@ -17,7 +16,7 @@ AlgebraicVector3 PerigeeRefittedTrackState::momentumVector() const
   return momentumAtVertex;
 }
 
-std::vector< RefCountedRefittedTrackState > 
+std::vector< PerigeeRefittedTrackState::RefCountedRefittedTrackState > 
 PerigeeRefittedTrackState::components() const
 {
   std::vector<RefCountedRefittedTrackState> result; result.reserve(1);
@@ -26,7 +25,7 @@ PerigeeRefittedTrackState::components() const
   return result;
 }
 
-ReferenceCountingPointer<RefittedTrackState> 
+PerigeeRefittedTrackState::RefCountedRefittedTrackState
 PerigeeRefittedTrackState::stateWithNewWeight (const double newWeight) const
 {
   return RefCountedRefittedTrackState(

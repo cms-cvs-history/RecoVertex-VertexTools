@@ -1,6 +1,7 @@
 #ifndef PerigeeRefittedTrackState_H
 #define PerigeeRefittedTrackState_H
 
+#include "DataFormats/GeometrySurface/interface/ReferenceCounted.h"
 #include "RecoVertex/VertexPrimitives/interface/RefittedTrackState.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateClosestToPoint.h"
 
@@ -14,9 +15,11 @@ class TrajectoryStateOnSurface;
 class Surface;
 class Propagator;
 
-class PerigeeRefittedTrackState : public RefittedTrackState {
+class PerigeeRefittedTrackState : public RefittedTrackState<5> {
 
 public:
+
+  typedef ReferenceCountingPointer<RefittedTrackState<5> > RefCountedRefittedTrackState;
 
   PerigeeRefittedTrackState(const TrajectoryStateClosestToPoint & tscp, 
   			    double aWeight = 1.) :
@@ -83,10 +86,10 @@ public:
    * Returns a new refitted state of the same type, but with another weight.
    * The current state is unchanged.
    */
-  virtual ReferenceCountingPointer<RefittedTrackState> stateWithNewWeight
+  virtual ReferenceCountingPointer<RefittedTrackState<5> > stateWithNewWeight
   	(const double newWeight) const;
 
-  virtual std::vector<ReferenceCountingPointer<RefittedTrackState> > components() const;
+  virtual std::vector<ReferenceCountingPointer<RefittedTrackState<5> > > components() const;
 
   virtual reco::TransientTrack transientTrack() const;
 
